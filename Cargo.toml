@@ -3,10 +3,15 @@ name = "hitsuki"
 version = "0.1.0"
 edition = "2021"
 authors = ["Elliott A."]
-description = "Hitsuki is a commandline tool for dynamic time based wallpapers in x11 based window managers. It is written in rust and uses the x11 crate to interact with the x11 server."
+description = "Hitsuki is a commandline tool for dynamic time based wallpapers in x11 based window managers. It is written in rust and uses the ffmpeg to interact with the x11 server and set the background."
 documentation = "https://github.com/Aethar01/hitsuki"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 clap = { version = "4.3.4", features = ["derive"] }
+confy = "0.5.1"
+dirs = "5.0.1"
+lazy_static = "1.4.0"
+serde = { version = "1.0.164", features = ["derive"] }
+toml = "0.7.4"
