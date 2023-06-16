@@ -1,3 +1,4 @@
+/// Configuration file functions
 use std::path::PathBuf;
 use serde::{Deserialize, Serialize};
 use confy;
