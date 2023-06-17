@@ -84,7 +84,7 @@ pub fn cycle_wallpaper_versions(wallpaper_path: PathBuf, verbose: bool) {
     show_wallpaper(current_wallpaper.clone(), verbose);
     let data = Arc::new(Mutex::new(0));
     let (_tx, rx) = channel::<i32>();
-    let _guard = timer.schedule_repeating(Duration::seconds(10), move || {
+    let _guard = timer.schedule_repeating(Duration::seconds(60), move || {
         let wallpaper_paths: Vec<PathBuf> = get_wallpaper_versions(wallpaper_path.clone(), verbose);
         let now = get_current_time();
         if verbose {
