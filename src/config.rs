@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use confy;
 
 #[derive(Serialize, Deserialize)]
-struct Config {
-    wallpaper_folders: Vec<PathBuf>,
+pub struct Config {
+    pub wallpaper_folders: Vec<PathBuf>,
 }
 
 impl ::std::default::Default for Config {

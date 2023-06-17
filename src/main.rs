@@ -41,21 +41,34 @@ struct Cli {
 enum Commands {
     /// Add new wallpaper folder
     Add {
-        #[arg(short, long, value_name = "PATH")]
+        #[arg(value_name = "PATH")]
         path: PathBuf,
     },
 
     /// Remove wallpaper folder
     Remove {
-        #[arg(short, long, value_name = "PATH")]
+        #[arg(value_name = "PATH")]
         path: PathBuf,
     },
 
     /// Show next wallpaper
     Next,
 
-    /// Show previous wallpapers
+    /// Show previous wallpaper
     Prev,
+
+    /// Select wallpaper folder 
+    /// and dynamically change wallpaper
+    /// based on time of day
+    SelectandStart {
+        #[arg(value_name = "WALLPAPER_NAME")]
+        folder_name: PathBuf,
+    },
+
+    /// Start dynamically changing wallpapers
+    /// based on time of day
+    /// from your added wallpaper folders
+    Start, 
 }
 
 fn main() {
@@ -74,6 +87,12 @@ fn main() {
         }
         Some(Commands::Prev) => {
             wallpaper::prev_wallpaper(config_path, cli.verbose);
+        }
+        Some(Commands::SelectandStart { folder_name }) => {
+            wallpaper::select_and_start(folder_name.clone(), config_path, cli.verbose);
+        }
+        Some(Commands::Start) => {
+            wallpaper::start(config_path, cli.verbose);
         }
         None => {
             if cli.list {
