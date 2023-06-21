@@ -7,6 +7,7 @@ use std::process::Command;
 use timer::Timer;
 use chrono::{Duration, Timelike, NaiveTime, Local};
 use crate::config::Config;
+use crate::kill_other_instances;
 use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use std::sync::mpsc::channel;
@@ -94,6 +95,7 @@ pub fn prev_wallpaper(config_path: PathBuf, verbose: bool) {
 // }
 
 pub fn show_wallpaper(wallpaper_path: PathBuf, verbose: bool) {
+    kill_other_instances();
     let output = Command::new("feh")
         .arg("--bg-fill")
         .arg(&wallpaper_path)
