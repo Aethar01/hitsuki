@@ -2,8 +2,11 @@
 /// based window managers. It is written in rust and uses the feh to 
 /// interact with the x11 server and set the background.
 use std::path::PathBuf;
+use path_dedot::*;
 use clap::{Parser, Subcommand};
 use lazy_static::lazy_static;
+use single_instance::SingleInstance;
+use sysinfo::{System, SystemExt, ProcessExt, Pid};
 
 pub mod config;
 pub mod wallpaper;
@@ -73,7 +76,25 @@ enum Commands {
 
 fn main() {
     let cli = Cli::parse();
-    let config_path = cli.config.unwrap();
+    let config_path = cli.config.unwrap().parse_dot().unwrap().to_path_buf();
+    //end all other instances
+    let instance = SingleInstance::new("hitsuki").unwrap();
+    if !instance.is_single() {
+        let mut system = System::new();
+        system.refresh_processes();
+        let ps = system.processes_by_name("hitsuki");
+        let ps_pids = ps.map(|p| p.pid()).collect::<Vec<_>>();
+        println!("{:?}", ps_pids);
+        let this_pid = Pid::from(std::process::id() as usize);
+        for pid in ps_pids {
+            if pid != this_pid {
+                if let Some(process) = system.process(pid) {
+                    process.kill();
+                }
+            }
+        }
+    }
+
 
     match &cli.command {
         Some(Commands::Add { path }) => {
