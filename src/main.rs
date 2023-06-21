@@ -38,6 +38,9 @@ struct Cli {
     /// Verbose output
     #[arg(short, long)]
     verbose: bool,
+
+    #[arg(short, long, value_name = "FOLDER NAME")]
+    set: Option<PathBuf>,
 }
 
 #[derive(Subcommand)]
@@ -72,6 +75,13 @@ enum Commands {
     /// based on time of day
     /// from your added wallpaper folders
     Start, 
+
+    /// Select wallpaper folder
+    /// and set config to selected wallpaper
+    Set {
+        #[arg(value_name = "WALLPAPER_NAME")]
+        folder_name: PathBuf,
+    },
 }
 
 fn main() {
@@ -95,6 +105,13 @@ fn main() {
         }
     }
 
+    if cli.set.is_some() {
+        wallpaper::set_wallpaper(cli.set.unwrap(), config_path.clone(), cli.verbose);
+    }
+
+    if cli.list {
+        config::list_folders(config_path.clone());
+    }
 
     match &cli.command {
         Some(Commands::Add { path }) => {
@@ -115,12 +132,11 @@ fn main() {
         Some(Commands::Start) => {
             wallpaper::start(config_path, cli.verbose);
         }
+        Some(Commands::Set { folder_name }) => {
+            wallpaper::set_wallpaper(folder_name.clone(), config_path, cli.verbose);
+        }
         None => {
-            if cli.list {
-                config::list_folders(config_path);
-            } else {
                 config::check_config(config_path, cli.verbose);
-            }
         }
     }
 }

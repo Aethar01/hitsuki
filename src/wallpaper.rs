@@ -236,11 +236,31 @@ pub fn select_and_start(selected_folder: PathBuf, config_path: PathBuf, verbose:
 pub fn set_wallpaper(selected_folder: PathBuf, config_path: PathBuf, verbose: bool) {
     let configuration: Config = confy::load_path(&config_path).unwrap();
     let wallpaper_folders = configuration.wallpaper_folders;
-    let index = wallpaper_folders.iter().position(|x| x == &selected_folder).unwrap();
-    if verbose {
-        println!("Selected folder: {:?}", selected_folder);
+    // let index = wallpaper_folders.iter().position(|x| x == &selected_folder).unwrap();
+    let mut fuzzy_matches: Vec<(i64, PathBuf)> = Vec::new();
+    for folder in &wallpaper_folders {
+        let score = fuzzy_match_path_buf(&selected_folder, &folder);
+        fuzzy_matches.push((score, folder.to_path_buf()));
     }
-    crate::config::set_current_wallpaper(config_path, index);
+    for x in &fuzzy_matches {
+        if verbose {
+            println!("Fuzzy match: {:?}", x);
+        }
+    }
+    fuzzy_matches.sort_by(|a, b| b.0.cmp(&a.0));
+    if &fuzzy_matches[0].0 < &50 {
+        println!("No matches found");
+        std::process::exit(1);
+    } else {
+
+        let selected_folder = &fuzzy_matches[0].1;
+    
+        if verbose {
+            println!("Selected folder: {:?}", selected_folder);
+        }
+        let index = wallpaper_folders.iter().position(|x| x == selected_folder).unwrap();
+        crate::config::set_current_wallpaper(config_path, index);
+    }
 }
 
 pub fn start(config_path: PathBuf, verbose: bool) {
