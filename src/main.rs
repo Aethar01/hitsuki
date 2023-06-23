@@ -83,12 +83,14 @@ enum Commands {
     },
 }
 
-fn kill_other_instances() {
+fn kill_other_instances(verbose: bool) {
     let mut system = System::new();
     system.refresh_all();
     let ps = system.processes_by_name("hitsuki");
     let ps_pids = ps.map(|p| p.pid()).collect::<Vec<_>>();
-    println!("{:?}", ps_pids);
+    if verbose {
+        println!("PIDS: {:?}", ps_pids);
+    }
     let this_pid = Pid::from(std::process::id() as usize);
     for pid in ps_pids {
         if pid != this_pid {
@@ -102,8 +104,7 @@ fn kill_other_instances() {
 fn main() {
     let cli = Cli::parse();
     let config_path = cli.config.unwrap().parse_dot().unwrap().to_path_buf();
-    //end all other instances
-    kill_other_instances();
+    let verbose = cli.verbose;
 
     if cli.set.is_some() {
         wallpaper::set_wallpaper(cli.set.unwrap(), config_path.clone(), cli.verbose);
@@ -121,22 +122,22 @@ fn main() {
             config::remove_folder(path.clone(), config_path);
         }
         Some(Commands::Next) => {
-            wallpaper::next_wallpaper(config_path, cli.verbose);
+            wallpaper::next_wallpaper(config_path, verbose);
         }
         Some(Commands::Prev) => {
-            wallpaper::prev_wallpaper(config_path, cli.verbose);
+            wallpaper::prev_wallpaper(config_path, verbose);
         }
         Some(Commands::SelectandStart { folder_name }) => {
-            wallpaper::select_and_start(folder_name.clone(), config_path, cli.verbose);
+            wallpaper::select_and_start(folder_name.clone(), config_path, verbose);
         }
         Some(Commands::Start) => {
-            wallpaper::start(config_path, cli.verbose);
+            wallpaper::start(config_path, verbose);
         }
         Some(Commands::Set { folder_name }) => {
-            wallpaper::set_wallpaper(folder_name.clone(), config_path, cli.verbose);
+            wallpaper::set_wallpaper(folder_name.clone(), config_path, verbose);
         }
         None => {
-                config::check_config(config_path, cli.verbose);
+                config::check_config(config_path, verbose);
         }
     }
 }

@@ -95,7 +95,7 @@ pub fn prev_wallpaper(config_path: PathBuf, verbose: bool) {
 // }
 
 pub fn show_wallpaper(wallpaper_path: PathBuf, verbose: bool) {
-    kill_other_instances();
+    kill_other_instances(verbose);
     let output = Command::new("feh")
         .arg("--bg-fill")
         .arg(&wallpaper_path)
