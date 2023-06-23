@@ -163,7 +163,6 @@ pub fn cycle_wallpaper_versions(wallpaper_path: PathBuf, verbose: bool) {
     let data = Arc::new(Mutex::new(0));
     let (_tx, rx) = channel::<i32>();
     let _guard = timer.schedule_repeating(Duration::seconds(60), move || {
-        let wallpaper_paths: Vec<PathBuf> = get_wallpaper_versions(&wallpaper_path, verbose);
         let now = get_current_time();
         if verbose {
             println!("Current time: {}", now);
@@ -173,14 +172,7 @@ pub fn cycle_wallpaper_versions(wallpaper_path: PathBuf, verbose: bool) {
             println!("Current hour: {}", now);
         }
 
-        // for _ in 1..=5 {
-        //     let old_wallpaper = wallpaper_paths[get_wallpaper_index(wallpaper_paths.clone(), now - 1)].clone();
-        //     let new_wallpaper = wallpaper_paths[get_wallpaper_index(wallpaper_paths.clone(), now)].clone();
-        //     let transition_wallpaper = make_transition_wallpaper(old_wallpaper, new_wallpaper, verbose);
-        //     show_wallpaper(transition_wallpaper.clone(), verbose);
-        // }
-
-        
+        let wallpaper_paths: Vec<PathBuf> = get_wallpaper_versions(&wallpaper_path, verbose);
         let current_wallpaper = wallpaper_paths[get_wallpaper_index(wallpaper_paths.clone(), now)].clone();
         show_wallpaper(current_wallpaper.clone(), verbose);
         let mut _data = data.lock().unwrap();
