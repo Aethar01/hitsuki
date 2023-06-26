@@ -28,6 +28,7 @@ Now add the folders to the hitsuki config with the add command.
 hitsuki add /path/to/wallpaperdirectory/folder1
 hitsuki add /path/to/wallpaperdirectory/folder2
 ````
+---
 
 Now you can set the current active wallpaper using:
 
@@ -38,12 +39,14 @@ or
 ```
 hitsuki -s folder1
 ```
+---
 
 From here you are free to run:
 
 ```
 hitsuki start
 ```
+---
 
 You can now cycle your wallpapers with:
 ```
