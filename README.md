@@ -21,7 +21,8 @@ wallpaperdirectory
     │   21.png
 ```
 
-With the number representing the hour in which you wish the wallpaper to be displayed. [br]
+With the number representing the hour in which you wish the wallpaper to be displayed. 
+
 Now add the folders to the hitsuki config with the add command.
 
 ```
