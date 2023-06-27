@@ -12,6 +12,7 @@ documentation = "https://github.com/Aethar01/hitsuki"
 chrono = "0.4.26"
 clap = { version = "4.3.4", features = ["derive"] }
 confy = "0.5.1"
+daemonize = "0.5.0"
 dirs = "5.0.1"
 fuzzy-matcher = "0.3.7"
 lazy_static = "1.4.0"

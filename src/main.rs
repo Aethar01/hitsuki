@@ -6,6 +6,8 @@ use path_dedot::*;
 use clap::{Parser, Subcommand};
 use lazy_static::lazy_static;
 use sysinfo::{System, SystemExt, ProcessExt, Pid};
+use std::fs::File;
+use daemonize::Daemonize;
 
 pub mod config;
 pub mod wallpaper;
@@ -40,6 +42,10 @@ struct Cli {
 
     #[arg(short, long, value_name = "FOLDER NAME")]
     set: Option<PathBuf>,
+
+    /// Run as daemon
+    #[arg(short, long)]
+    daemonize: bool,
 }
 
 #[derive(Subcommand)]
@@ -81,9 +87,12 @@ enum Commands {
         #[arg(value_name = "WALLPAPER_NAME")]
         folder_name: PathBuf,
     },
+
+    /// Stop daemonized processes
+    StopDaemon,
 }
 
-fn kill_other_instances(verbose: bool) {
+fn ps_pids(verbose: bool) -> Vec<Pid> {
     let mut system = System::new();
     system.refresh_all();
     let ps = system.processes_by_name("hitsuki");
@@ -91,6 +100,13 @@ fn kill_other_instances(verbose: bool) {
     if verbose {
         println!("PIDS: {:?}", ps_pids);
     }
+    ps_pids
+}
+
+fn kill_other_instances(verbose: bool) {
+    let mut system = System::new();
+    system.refresh_all();
+    let ps_pids = ps_pids(verbose);
     let this_pid = Pid::from(std::process::id() as usize);
     for pid in ps_pids {
         if pid != this_pid {
@@ -101,19 +117,37 @@ fn kill_other_instances(verbose: bool) {
     }
 }
 
-fn main() {
-    let cli = Cli::parse();
-    let config_path = cli.config.unwrap().parse_dot().unwrap().to_path_buf();
-    let verbose = cli.verbose;
 
-    if cli.set.is_some() {
-        wallpaper::set_wallpaper(cli.set.unwrap(), config_path.clone(), cli.verbose);
+// fn check_daemonized(verbose: bool) -> bool {
+//     let ps_pids = ps_pids(verbose);
+//     let run = dirs::runtime_dir().unwrap();
+//     let run = run.to_str().unwrap();
+//     let pid_file = format!("{}/hitsuki/hitsuki.pid", run);
+//     let daemon_pid = std::fs::read_to_string(pid_file).unwrap().trim().parse::<usize>().unwrap();
+//     for pid in ps_pids {
+//         if pid == Pid::from(daemon_pid) && pid != Pid::from(std::process::id() as usize) {
+//             true;
+//         }
+//     }
+//     false
+// }
+
+fn stop_daemon(verbose: bool) {
+    let run = dirs::runtime_dir().unwrap();
+    let run = run.to_str().unwrap();
+    let pid_file = format!("{}/hitsuki/hitsuki.pid", run);
+    let daemon_pid = std::fs::read_to_string(pid_file).unwrap().trim().parse::<usize>().unwrap();
+    let mut system = System::new();
+    system.refresh_all();
+    if verbose {
+        println!("Killing daemon with pid: {}", daemon_pid);
     }
-
-    if cli.list {
-        config::list_folders(config_path.clone());
+    if let Some(process) = system.process(Pid::from(daemon_pid)) {
+        process.kill();
     }
+}
 
+fn match_commands(cli: Cli, config_path: PathBuf, verbose: bool) {
     match &cli.command {
         Some(Commands::Add { path }) => {
             config::add_folder(path.clone(), config_path);
@@ -136,8 +170,55 @@ fn main() {
         Some(Commands::Set { folder_name }) => {
             wallpaper::set_wallpaper(folder_name.clone(), config_path, verbose);
         }
+        Some(Commands::StopDaemon) => {
+            stop_daemon(verbose);
+        }
         None => {
-                config::check_config(config_path, verbose);
+            config::check_config(config_path, verbose);
         }
     }
+}
+
+fn daemonize(cli: Cli, config_path: PathBuf, verbose: bool) {
+        let run = dirs::runtime_dir().unwrap();
+        let run = run.to_str().unwrap();
+        std::fs::create_dir_all(format!("{}/hitsuki", run)).unwrap();
+        let stdout = File::create(format!("{}/hitsuki/hitsuki.out", run)).unwrap();
+        let stderr = File::create(format!("{}/hitsuki/hitsuki.err", run)).unwrap();
+        let daemonize = Daemonize::new()
+            .pid_file(format!("{}/hitsuki/hitsuki.pid", run))
+            .stdout(stdout)
+            .stderr(stderr);
+        match daemonize.start() {
+            Ok(_) => {
+                match_commands(cli, config_path, verbose);
+            }
+            Err(e) => {
+                if verbose {
+                    println!("Error, {}", e);
+                }
+                println!("Daemon already running")
+            }
+        }
+}
+
+fn main() {
+    let cli = Cli::parse();
+    let config_path = cli.config.as_ref().unwrap().parse_dot().unwrap().to_path_buf();
+    let verbose = cli.verbose;
+
+    if cli.set.is_some() {
+        wallpaper::set_wallpaper(cli.set.clone().unwrap(), config_path.clone(), verbose);
+    }
+
+    if cli.list {
+        config::list_folders(config_path.clone());
+    }
+
+    if cli.daemonize {
+        daemonize(cli, config_path, verbose);
+    } else {
+        match_commands(cli, config_path, verbose);
+    } 
+
 }
