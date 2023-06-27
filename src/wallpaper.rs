@@ -1,17 +1,17 @@
 /// Wallpaper management functions
 
-// use std::env;
 use std::cmp::min;
 use std::path::PathBuf;
 use std::process::Command;
 use timer::Timer;
 use chrono::{Duration, Timelike, NaiveTime, Local};
-use crate::config::Config;
-use crate::kill_other_instances;
 use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
+
+use crate::config::Config;
+use crate::process::kill_other_instances;
 
 pub fn next_wallpaper(config_path: PathBuf, verbose: bool) {
     let configuration: Config = confy::load_path(&config_path).unwrap();

@@ -5,12 +5,13 @@ use std::path::PathBuf;
 use path_dedot::*;
 use clap::{Parser, Subcommand};
 use lazy_static::lazy_static;
-use sysinfo::{System, SystemExt, ProcessExt, Pid};
-use std::fs::File;
-use daemonize::Daemonize;
+
+use crate::process::daemonize;
+use crate::process::match_commands;
 
 pub mod config;
 pub mod wallpaper;
+pub mod process;
 
 lazy_static! {
     static ref DEFAULT_CONFIG_PATH: PathBuf = {
@@ -23,7 +24,7 @@ lazy_static! {
 
 #[derive(Parser)]
 #[command(version, author, about, long_about = None)]
-struct Cli {
+pub struct Cli {
     /// Sets a custom config file.
     /// Default: $HOME/.config/hitsuki/config.toml
     #[arg(short, long, value_name = "FILE", default_value = DEFAULT_CONFIG_PATH.to_str().unwrap())]
@@ -90,117 +91,11 @@ enum Commands {
 
     /// Stop daemonized processes
     StopDaemon,
+
+    /// Kill all hitsuki processes
+    Kill,
 }
 
-fn ps_pids(verbose: bool) -> Vec<Pid> {
-    let mut system = System::new();
-    system.refresh_all();
-    let ps = system.processes_by_name("hitsuki");
-    let ps_pids = ps.map(|p| p.pid()).collect::<Vec<_>>();
-    if verbose {
-        println!("PIDS: {:?}", ps_pids);
-    }
-    ps_pids
-}
-
-fn kill_other_instances(verbose: bool) {
-    let mut system = System::new();
-    system.refresh_all();
-    let ps_pids = ps_pids(verbose);
-    let this_pid = Pid::from(std::process::id() as usize);
-    for pid in ps_pids {
-        if pid != this_pid {
-            if let Some(process) = system.process(pid) {
-                process.kill();
-            }
-        }
-    }
-}
-
-
-// fn check_daemonized(verbose: bool) -> bool {
-//     let ps_pids = ps_pids(verbose);
-//     let run = dirs::runtime_dir().unwrap();
-//     let run = run.to_str().unwrap();
-//     let pid_file = format!("{}/hitsuki/hitsuki.pid", run);
-//     let daemon_pid = std::fs::read_to_string(pid_file).unwrap().trim().parse::<usize>().unwrap();
-//     for pid in ps_pids {
-//         if pid == Pid::from(daemon_pid) && pid != Pid::from(std::process::id() as usize) {
-//             true;
-//         }
-//     }
-//     false
-// }
-
-fn stop_daemon(verbose: bool) {
-    let run = dirs::runtime_dir().unwrap();
-    let run = run.to_str().unwrap();
-    let pid_file = format!("{}/hitsuki/hitsuki.pid", run);
-    let daemon_pid = std::fs::read_to_string(pid_file).unwrap().trim().parse::<usize>().unwrap();
-    let mut system = System::new();
-    system.refresh_all();
-    if verbose {
-        println!("Killing daemon with pid: {}", daemon_pid);
-    }
-    if let Some(process) = system.process(Pid::from(daemon_pid)) {
-        process.kill();
-    }
-}
-
-fn match_commands(cli: Cli, config_path: PathBuf, verbose: bool) {
-    match &cli.command {
-        Some(Commands::Add { path }) => {
-            config::add_folder(path.clone(), config_path);
-        }
-        Some(Commands::Remove { path }) => {
-            config::remove_folder(path.clone(), config_path);
-        }
-        Some(Commands::Next) => {
-            wallpaper::next_wallpaper(config_path, verbose);
-        }
-        Some(Commands::Prev) => {
-            wallpaper::prev_wallpaper(config_path, verbose);
-        }
-        Some(Commands::SelectandStart { folder_name }) => {
-            wallpaper::select_and_start(folder_name.clone(), config_path, verbose);
-        }
-        Some(Commands::Start) => {
-            wallpaper::start(config_path, verbose);
-        }
-        Some(Commands::Set { folder_name }) => {
-            wallpaper::set_wallpaper(folder_name.clone(), config_path, verbose);
-        }
-        Some(Commands::StopDaemon) => {
-            stop_daemon(verbose);
-        }
-        None => {
-            config::check_config(config_path, verbose);
-        }
-    }
-}
-
-fn daemonize(cli: Cli, config_path: PathBuf, verbose: bool) {
-        let run = dirs::runtime_dir().unwrap();
-        let run = run.to_str().unwrap();
-        std::fs::create_dir_all(format!("{}/hitsuki", run)).unwrap();
-        let stdout = File::create(format!("{}/hitsuki/hitsuki.out", run)).unwrap();
-        let stderr = File::create(format!("{}/hitsuki/hitsuki.err", run)).unwrap();
-        let daemonize = Daemonize::new()
-            .pid_file(format!("{}/hitsuki/hitsuki.pid", run))
-            .stdout(stdout)
-            .stderr(stderr);
-        match daemonize.start() {
-            Ok(_) => {
-                match_commands(cli, config_path, verbose);
-            }
-            Err(e) => {
-                if verbose {
-                    println!("Error, {}", e);
-                }
-                println!("Daemon already running")
-            }
-        }
-}
 
 fn main() {
     let cli = Cli::parse();
@@ -216,9 +111,13 @@ fn main() {
     }
 
     if cli.daemonize {
-        daemonize(cli, config_path, verbose);
+        match daemonize(&cli, config_path.clone(), verbose) {
+            Ok(_) => {}
+            Err(_) => {
+            println!("Daemon already running...");
+            }
+        };
     } else {
-        match_commands(cli, config_path, verbose);
+        match_commands(&cli, config_path, verbose);
     } 
-
 }
