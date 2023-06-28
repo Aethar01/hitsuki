@@ -94,6 +94,9 @@ enum Commands {
 
     /// Kill all hitsuki processes
     Kill,
+
+    /// Show status and if daemonized
+    Status,
 }
 
 

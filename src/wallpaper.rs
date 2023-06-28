@@ -9,6 +9,7 @@ use fuzzy_matcher::FuzzyMatcher;
 use fuzzy_matcher::skim::SkimMatcherV2;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
+use sysinfo::Pid;
 
 use crate::config::Config;
 use crate::process::kill_other_instances;
@@ -95,7 +96,7 @@ pub fn prev_wallpaper(config_path: PathBuf, verbose: bool) {
 // }
 
 pub fn show_wallpaper(wallpaper_path: PathBuf, verbose: bool) {
-    kill_other_instances(verbose);
+    kill_other_instances();
     let output = Command::new("feh")
         .arg("--bg-fill")
         .arg(&wallpaper_path)
@@ -262,4 +263,36 @@ pub fn start(config_path: PathBuf, verbose: bool) {
     let wallpaper_folders = configuration.wallpaper_folders;
     let current_wallpaper = wallpaper_folders[configuration.current_wallpaper_index].clone();
     cycle_wallpaper_versions(current_wallpaper, verbose);
+}
+
+pub fn status(config_path: PathBuf, verbose: bool) -> std::io::Result<()> {
+    let configuration: Config = confy::load_path(&config_path).unwrap();
+    let wallpaper_folders = configuration.wallpaper_folders;
+    let current_wallpaper = wallpaper_folders[configuration.current_wallpaper_index].clone();
+    let this_pid = Pid::from(std::process::id() as usize);
+    let run = dirs::runtime_dir().unwrap();
+    let run = run.to_str().unwrap();
+    let pid_file = format!("{}/hitsuki/hitsuki.pid", run);
+    let ps_pids = crate::process::ps_pids();
+    let not_running = std::io::Error::new(std::io::ErrorKind::Other, "Hitsuki is not running");
+    for pid in ps_pids {
+        if pid != this_pid {
+            let daemon_pid = Pid::from(std::fs::read_to_string(pid_file).unwrap().trim().parse::<usize>().unwrap());
+            if pid == daemon_pid {
+                println!("Hitsuki is running as a daemon");
+                if verbose {
+                    println!("Hitsuki PID: {:?}", pid.to_string());
+                }
+                println!("Current wallpaper: {:?}", current_wallpaper);
+                return Ok(());
+            }
+            println!("Hitsuki is running");
+            if verbose {
+                println!("Hitsuki PID: {:?}", pid.to_string());
+            }
+            println!("Current wallpaper: {:?}", current_wallpaper);
+            return Ok(());
+        }
+    }
+    Err(not_running)
 }

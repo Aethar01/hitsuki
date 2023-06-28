@@ -38,7 +38,15 @@ pub fn match_commands(cli: &Cli, config_path: PathBuf, verbose: bool) {
             stop_daemon(verbose);
         }
         Some(Commands::Kill) => {
-            kill_other_instances(verbose);
+            kill_other_instances();
+        }
+        Some(Commands::Status) => {
+            match wallpaper::status(config_path, verbose) {
+                Ok(_) => {}
+                Err(e) => {
+                    println!("{}", e);
+                }
+            }
         }
         None => {
             config::check_config(config_path, verbose);
@@ -46,21 +54,18 @@ pub fn match_commands(cli: &Cli, config_path: PathBuf, verbose: bool) {
     }
 }
 
-pub fn ps_pids(verbose: bool) -> Vec<Pid> {
+pub fn ps_pids() -> Vec<Pid> {
     let mut system = System::new();
     system.refresh_all();
     let ps = system.processes_by_name("hitsuki");
     let ps_pids = ps.map(|p| p.pid()).collect::<Vec<_>>();
-    if verbose {
-        println!("PIDS: {:?}", ps_pids);
-    }
     ps_pids
 }
 
-pub fn kill_other_instances(verbose: bool) {
+pub fn kill_other_instances() {
     let mut system = System::new();
     system.refresh_all();
-    let ps_pids = ps_pids(verbose);
+    let ps_pids = ps_pids();
     let this_pid = Pid::from(std::process::id() as usize);
     for pid in ps_pids {
         if pid != this_pid {
