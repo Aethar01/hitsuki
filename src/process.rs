@@ -91,7 +91,6 @@ pub fn stop_daemon(verbose: bool) {
     }
 }
 
-
 pub fn daemonize(cli: &Cli, config_path: PathBuf, verbose: bool) -> Result<(), ()> {
     let run = dirs::runtime_dir().unwrap();
     let run = run.to_str().unwrap();
@@ -114,4 +113,8 @@ pub fn daemonize(cli: &Cli, config_path: PathBuf, verbose: bool) -> Result<(), (
             Err(())
         }
     }
+}
+
+pub fn restart_daemon(verbose: bool) {
+    stop_daemon(verbose);
 }

@@ -47,6 +47,10 @@ pub struct Cli {
     /// Run as daemon
     #[arg(short, long)]
     daemonize: bool,
+
+    /// Restart daemonized processes
+    #[arg(short, long)]
+    restart: bool,
 }
 
 #[derive(Subcommand)]
@@ -111,6 +115,10 @@ fn main() {
 
     if cli.list {
         config::list_folders(config_path.clone());
+    }
+
+    if cli.restart {
+        process::restart_daemon(verbose);
     }
 
     if cli.daemonize {
