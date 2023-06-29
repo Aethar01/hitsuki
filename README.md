@@ -23,6 +23,8 @@ wallpaperdirectory
 
 With the number representing the hour in which you wish the wallpaper to be displayed. 
 
+### Add wallpapers
+
 Now add the folders to the hitsuki config with the add command.
 
 ```
@@ -30,6 +32,7 @@ hitsuki add /path/to/wallpaperdirectory/folder1
 hitsuki add /path/to/wallpaperdirectory/folder2
 ````
 ---
+### Set wallpaper
 
 Now you can set the current active wallpaper using:
 
@@ -41,6 +44,8 @@ or
 hitsuki -s folder1
 ```
 ---
+
+### Start hitsuki
 
 From here you are free to run:
 
@@ -59,16 +64,29 @@ hitsuki prev
 ```
 ---
 
-If you use the -s option for set you can run a command afterwards eg.
+### Additional usage
 
+If you use the -s option for set you can run a command afterwards eg.
 ```
 hitsuki -s folder1 start
+```
+
+Use the -d option to start hitsuki as a daemon
+```
+hitsuki -d start
+```
+
+Use the -r option to restart the daemon if it is already running (Useful for putting in scripts and changing the wallpaper when daemonized)
+```
+hitsuki -dr start
 ```
 
 Use the following to list all the current added directories
 ```
 hitsuki -l
 ```
+
+### Remove wallpaper
 
 Finally if you wish to remove a wallpaper directory from the list:
 ```
