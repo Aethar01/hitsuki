@@ -80,6 +80,10 @@ pub fn stop_daemon(verbose: bool) {
     let run = dirs::runtime_dir().unwrap();
     let run = run.to_str().unwrap();
     let pid_file = format!("{}/hitsuki/hitsuki.pid", run);
+    if !PathBuf::from(&pid_file).exists() {
+        println!("No daemon running");
+        return;
+    }
     let daemon_pid = std::fs::read_to_string(pid_file).unwrap().trim().parse::<usize>().unwrap();
     let mut system = System::new();
     system.refresh_all();
