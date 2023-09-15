@@ -90,13 +90,13 @@ hitsuki -l
 
 Finally if you wish to remove a wallpaper directory from the list:
 ```
-hitsuki remove wallpaper1
+hitsuki remove folder1
 ```
 
 ## Example
 
 Let's say for example in a window manager config file:
 ```
-hitsuki -drs wallpaper1 start
+hitsuki -drs folder1 start
 ```
 This will start hitsuki using wallpaper1 as a daemon and if the config file is reloaded, the daemon is restarted.
